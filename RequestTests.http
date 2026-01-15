@@ -23,5 +23,12 @@ POST http://localhost:8080/api/validate_chirp
 POST http://localhost:8080/api/validate_chirp
 
 {
-    "body": ""
+    "body": "I really need a kerfuffle to go to bed sooner, Fornax !"
+}
+
+###
+POST http://localhost:8080/api/validate_chirp
+
+{
+    "body": "I want a kerfuffle to go to the kitchen sooner, Fornax!"
 }

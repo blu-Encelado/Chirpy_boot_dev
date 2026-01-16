@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"Chirpy_boot_dev/main.go/internal/database"
+	"Chirpy/internal/database"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"

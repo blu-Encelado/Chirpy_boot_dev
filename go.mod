@@ -1,4 +1,4 @@
-module Chirpy_boot_dev/main.go
+module Chirpy
 
 go 1.25.1
 

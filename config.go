@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Chirpy_boot_dev/main.go/internal/database"
+	"Chirpy/internal/database"
 	"sync/atomic"
 )
 

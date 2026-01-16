@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -22,6 +23,7 @@ func main() {
 
 	godotenv.Load()
 	dbUrl := os.Getenv("DB_URL")
+	apiCfg.platform = os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbUrl)
 
 	if err != nil {
@@ -29,13 +31,15 @@ func main() {
 		os.Exit(1)
 	}
 	dbQueries := database.New(db)
-	apiCfg.database = dbQueries
+	apiCfg.db = dbQueries
 
 	serv_mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 	serv_mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	serv_mux.HandleFunc("GET /admin/metrics", apiCfg.handleCountHits)
 	serv_mux.HandleFunc("POST /admin/reset", apiCfg.handleResetCountHits)
 	serv_mux.HandleFunc("POST /api/validate_chirp", handlerChirpValidate)
+
+	serv_mux.HandleFunc("POST /api/users", apiCfg.handlerRegisterUser)
 
 	server := &http.Server{
 		Addr:    ":" + port,
@@ -45,6 +49,7 @@ func main() {
 	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
 	log.Fatal(server.ListenAndServe())
 }
+
 func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -72,4 +77,15 @@ func (cfg *apiConfig) handleResetCountHits(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusOK)
 	cfg.fileserverHits.Swap(0)
 	w.Write([]byte("Metrics Resetted"))
+
+	if cfg.platform != "dev" {
+		respondWithError(w, http.StatusForbidden, "not dev", nil)
+	}
+
+	ctx := context.Background()
+	err := cfg.db.ResetUser(ctx)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't reset users", err)
+	}
 }

@@ -32,3 +32,14 @@ POST http://localhost:8080/api/validate_chirp
 {
     "body": "I want a kerfuffle to go to the kitchen sooner, Fornax!"
 }
+
+###
+POST http://localhost:8080/api/users
+
+{
+    "email": "giuseppebloob@gmail.com"
+}
+
+###
+POST http://localhost:8080/admin/reset
+

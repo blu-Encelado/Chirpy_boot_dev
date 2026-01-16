@@ -1,10 +1,16 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
-	"sync/atomic"
+	"os"
+
+	"Chirpy_boot_dev/main.go/internal/database"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -13,6 +19,17 @@ func main() {
 
 	serv_mux := http.NewServeMux()
 	apiCfg := apiConfig{}
+
+	godotenv.Load()
+	dbUrl := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbUrl)
+
+	if err != nil {
+		log.Printf("fail to opne .env: %s", err)
+		os.Exit(1)
+	}
+	dbQueries := database.New(db)
+	apiCfg.database = dbQueries
 
 	serv_mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 	serv_mux.HandleFunc("GET /api/healthz", handlerReadiness)
@@ -32,10 +49,6 @@ func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(http.StatusText(http.StatusOK)))
-}
-
-type apiConfig struct {
-	fileserverHits atomic.Int32
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {

@@ -27,10 +27,11 @@ POST http://localhost:8080/api/validate_chirp
 }
 
 ###
-POST http://localhost:8080/api/validate_chirp
+POST http://localhost:8080/api/chirps
 
 {
-    "body": "I want a kerfuffle to go to the kitchen sooner, Fornax!"
+  "body": "If you're committed enough, you can make any story work.",
+  "user_id": "${userID1}"
 }
 
 ###

@@ -37,7 +37,7 @@ func main() {
 	serv_mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	serv_mux.HandleFunc("GET /admin/metrics", apiCfg.handleCountHits)
 	serv_mux.HandleFunc("POST /admin/reset", apiCfg.handleResetCountHits)
-	serv_mux.HandleFunc("POST /api/validate_chirp", handlerChirpValidate)
+	serv_mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirps)
 
 	serv_mux.HandleFunc("POST /api/users", apiCfg.handlerRegisterUser)
 

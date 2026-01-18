@@ -38,6 +38,8 @@ func main() {
 	serv_mux.HandleFunc("GET /admin/metrics", apiCfg.handleCountHits)
 	serv_mux.HandleFunc("POST /admin/reset", apiCfg.handleResetCountHits)
 	serv_mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirps)
+	serv_mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetChirps)
+	serv_mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetSigleChirp)
 
 	serv_mux.HandleFunc("POST /api/users", apiCfg.handlerRegisterUser)
 

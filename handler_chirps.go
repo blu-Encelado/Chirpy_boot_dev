@@ -77,3 +77,65 @@ func cleanBadWords(sentence string) string {
 	}
 	return strings.Join(cleaned_words, " ")
 }
+
+func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
+	type returnValues struct {
+		ID        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Body      string    `json:"body"`
+		User_id   uuid.UUID `json:"user_id"`
+	}
+
+	ctx := context.Background()
+	chirps, err := cfg.db.GetAllChirps(ctx)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Fail to get chirps", err)
+		return
+	}
+
+	request := []returnValues{}
+
+	for _, chirp := range chirps {
+		item := returnValues{
+			ID:        chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body:      chirp.Body,
+			User_id:   chirp.UserID,
+		}
+		request = append(request, item)
+	}
+	respondWithJson(w, http.StatusOK, request)
+}
+
+func (cfg *apiConfig) handlerGetSigleChirp(w http.ResponseWriter, r *http.Request) {
+	type returnValues struct {
+		ID        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Body      string    `json:"body"`
+		User_id   uuid.UUID `json:"user_id"`
+	}
+	ctx := context.Background()
+	id_requested := r.PathValue("chirpID")
+	uuidRequested, err := uuid.Parse(id_requested)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Fail to get chirp id", err)
+		return
+	}
+	chirp, err := cfg.db.GetChirpFromId(ctx, uuidRequested)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Fail to get chirp from id", err)
+		return
+	}
+	request := returnValues{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		User_id:   chirp.UserID,
+	}
+	respondWithJson(w, http.StatusOK, request)
+}

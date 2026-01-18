@@ -13,3 +13,11 @@ RETURNING *;
 
 -- name: ResetChirps :exec
 DELETE FROM chirps;
+
+-- name: GetAllChirps :many
+SELECT * FROM chirps
+ORDER BY created_at ASC;
+
+-- name: GetChirpFromId :one
+SELECT * FROM chirps 
+WHERE id = $1;

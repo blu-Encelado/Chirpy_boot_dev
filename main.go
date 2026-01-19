@@ -42,6 +42,7 @@ func main() {
 	serv_mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetSigleChirp)
 
 	serv_mux.HandleFunc("POST /api/users", apiCfg.handlerRegisterUser)
+	serv_mux.HandleFunc("POST /api/login", apiCfg.handlerLoginUser)
 
 	server := &http.Server{
 		Addr:    ":" + port,

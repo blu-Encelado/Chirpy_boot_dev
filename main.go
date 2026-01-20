@@ -14,6 +14,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var secret_key string = ""
+
 func main() {
 	const filepathRoot = "."
 	const port = "8080"
@@ -23,6 +25,7 @@ func main() {
 
 	godotenv.Load()
 	dbUrl := os.Getenv("DB_URL")
+	secret_key = os.Getenv("SECRET")
 	apiCfg.platform = os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbUrl)
 

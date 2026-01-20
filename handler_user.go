@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 )
 
 func (cfg *apiConfig) handlerRegisterUser(w http.ResponseWriter, r *http.Request) {
@@ -55,8 +56,9 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	type parameters struct {
-		Password string `json:"password"`
-		Email    string `json:"email"`
+		Password           string        `json:"password"`
+		Email              string        `json:"email"`
+		Expires_in_Seconds time.Duration `json:"expires_in_seconds"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -66,6 +68,9 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
+	}
+	if params.Expires_in_Seconds == 0 {
+		params.Expires_in_Seconds = time.Hour
 	}
 
 	hash, err := cfg.db.CheckPassword(ctx, params.Email)
@@ -92,12 +97,16 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't find user", err)
 		return
 	}
-
+	token, err := auth.MakeJWT(db_user.ID, secret_key, params.Expires_in_Seconds)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't generate a token", err)
+	}
 	user := User{
 		ID:        db_user.ID,
 		CreatedAt: db_user.CreatedAt,
 		UpdatedAt: db_user.UpdatedAt,
 		Email:     db_user.Email,
+		Token:     token,
 	}
 
 	respondWithJson(w, http.StatusOK, user)

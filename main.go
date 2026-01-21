@@ -46,6 +46,8 @@ func main() {
 
 	serv_mux.HandleFunc("POST /api/users", apiCfg.handlerRegisterUser)
 	serv_mux.HandleFunc("POST /api/login", apiCfg.handlerLoginUser)
+	serv_mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
+	serv_mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
 
 	server := &http.Server{
 		Addr:    ":" + port,

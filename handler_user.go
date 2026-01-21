@@ -56,9 +56,8 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	type parameters struct {
-		Password           string        `json:"password"`
-		Email              string        `json:"email"`
-		Expires_in_Seconds time.Duration `json:"expires_in_seconds"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -68,9 +67,6 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
-	}
-	if params.Expires_in_Seconds == 0 {
-		params.Expires_in_Seconds = time.Hour
 	}
 
 	hash, err := cfg.db.CheckPassword(ctx, params.Email)
@@ -97,16 +93,34 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't find user", err)
 		return
 	}
-	token, err := auth.MakeJWT(db_user.ID, secret_key, params.Expires_in_Seconds)
+	token, err := auth.MakeJWT(db_user.ID, secret_key, time.Hour)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't generate a token", err)
+		return
 	}
+
+	ref_token, err := auth.MakeRefreshToken()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't make a refresh_token", err)
+		return
+	}
+	db_ref_token, err := cfg.db.CreateRefreshToken(ctx, database.CreateRefreshTokenParams{
+		Token:     ref_token,
+		UserID:    db_user.ID,
+		ExpiresAt: time.Now().AddDate(0, 0, 60),
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't add a refresh_token", err)
+		return
+	}
+
 	user := User{
-		ID:        db_user.ID,
-		CreatedAt: db_user.CreatedAt,
-		UpdatedAt: db_user.UpdatedAt,
-		Email:     db_user.Email,
-		Token:     token,
+		ID:            db_user.ID,
+		CreatedAt:     db_user.CreatedAt,
+		UpdatedAt:     db_user.UpdatedAt,
+		Email:         db_user.Email,
+		Token:         token,
+		Refresh_Token: db_ref_token.Token,
 	}
 
 	respondWithJson(w, http.StatusOK, user)

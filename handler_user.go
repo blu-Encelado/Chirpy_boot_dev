@@ -125,3 +125,50 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJson(w, http.StatusOK, user)
 }
+
+func (cfg *apiConfig) handlerPUTUser(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Password string `json:"password"`
+		Email    string `json:"email"`
+	}
+
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "coudn't find the token", err)
+		return
+	}
+
+	user_id, err := auth.ValidateJWT(token, secret_key)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "invalid jwt token", err)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err = decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
+		return
+	}
+	ctx := context.Background()
+
+	hashed_pass, err := auth.HashPassword(params.Password)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't hash password", err)
+		return
+	}
+	updated_user := database.UpdateEmailAndPassParams{
+		Email:          params.Email,
+		HashedPassword: hashed_pass,
+		ID:             user_id,
+	}
+
+	cfg.db.UpdateEmailAndPass(ctx, updated_user)
+
+	type new_user struct {
+		Email string `json:"email"`
+	}
+	respondWithJson(w, http.StatusOK, new_user{updated_user.Email})
+}

@@ -5,6 +5,7 @@ import (
 	"Chirpy/internal/database"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"slices"
 	"strings"
@@ -147,4 +148,41 @@ func (cfg *apiConfig) handlerGetSigleChirp(w http.ResponseWriter, r *http.Reques
 		User_id:   chirp.UserID,
 	}
 	respondWithJson(w, http.StatusOK, request)
+}
+
+func (cfg *apiConfig) handlerDeleteChirp(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "coudn't find the token", err)
+		return
+	}
+	user_id, err := auth.ValidateJWT(token, secret_key)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "invalid jwt token", err)
+		return
+	}
+	ctx := context.Background()
+	id_requested := r.PathValue("chirpID")
+	chirp_uuid, err := uuid.Parse(id_requested)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Fail to get chirp id", err)
+		return
+	}
+	chirp, err := cfg.db.GetChirpFromId(ctx, chirp_uuid)
+
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "chirp not found", err)
+		return
+	}
+
+	if user_id != chirp.UserID {
+		respondWithError(w, http.StatusForbidden, "the user is not the owner", errors.New("Unauthorized"))
+		return
+	}
+	err = cfg.db.DeleteSingleChirp(ctx, chirp_uuid)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "error on delete chirp", err)
+		return
+	}
+	respondWithJson(w, http.StatusNoContent, nil)
 }

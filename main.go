@@ -43,9 +43,11 @@ func main() {
 	serv_mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirps)
 	serv_mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetChirps)
 	serv_mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetSigleChirp)
+	serv_mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.handlerDeleteChirp)
 
 	serv_mux.HandleFunc("POST /api/users", apiCfg.handlerRegisterUser)
 	serv_mux.HandleFunc("POST /api/login", apiCfg.handlerLoginUser)
+	serv_mux.HandleFunc("PUT /api/users", apiCfg.handlerPUTUser)
 	serv_mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
 	serv_mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
 

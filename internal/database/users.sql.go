@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,7 +22,7 @@ VALUES (
     $1,
     $2
 )
-RETURNING id, created_at, updated_at, email, hashed_password
+RETURNING id, created_at, updated_at, email, is_chirpy_red, hashed_password
 `
 
 type CreateUserParams struct {
@@ -37,20 +38,22 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Email,
+		&i.IsChirpyRed,
 		&i.HashedPassword,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, created_at, updated_at, email FROM users WHERE email = $1
+SELECT id, created_at, updated_at, email, is_chirpy_red FROM users WHERE email = $1
 `
 
 type GetUserRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Email     string
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Email       string
+	IsChirpyRed sql.NullBool
 }
 
 func (q *Queries) GetUser(ctx context.Context, email string) (GetUserRow, error) {
@@ -61,6 +64,7 @@ func (q *Queries) GetUser(ctx context.Context, email string) (GetUserRow, error)
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Email,
+		&i.IsChirpyRed,
 	)
 	return i, err
 }
@@ -86,5 +90,19 @@ type UpdateEmailAndPassParams struct {
 
 func (q *Queries) UpdateEmailAndPass(ctx context.Context, arg UpdateEmailAndPassParams) error {
 	_, err := q.db.ExecContext(ctx, updateEmailAndPass, arg.Email, arg.HashedPassword, arg.ID)
+	return err
+}
+
+const updateIsChirpyRed = `-- name: UpdateIsChirpyRed :exec
+UPDATE users SET is_chirpy_red = $1 WHERE id = $2
+`
+
+type UpdateIsChirpyRedParams struct {
+	IsChirpyRed sql.NullBool
+	ID          uuid.UUID
+}
+
+func (q *Queries) UpdateIsChirpyRed(ctx context.Context, arg UpdateIsChirpyRedParams) error {
+	_, err := q.db.ExecContext(ctx, updateIsChirpyRed, arg.IsChirpyRed, arg.ID)
 	return err
 }

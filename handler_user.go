@@ -38,15 +38,16 @@ func (cfg *apiConfig) handlerRegisterUser(w http.ResponseWriter, r *http.Request
 	}
 
 	user_struct, err := cfg.db.CreateUser(ctx, created_user)
-
-	user := User{
-		ID:        user_struct.ID,
-		CreatedAt: user_struct.CreatedAt,
-		UpdatedAt: user_struct.UpdatedAt,
-		Email:     user_struct.Email,
-	}
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't register user", err)
+		return
+	}
+	user := User{
+		ID:          user_struct.ID,
+		CreatedAt:   user_struct.CreatedAt,
+		UpdatedAt:   user_struct.UpdatedAt,
+		Email:       user_struct.Email,
+		IsChirpyRed: false,
 	}
 
 	respondWithJson(w, http.StatusCreated, user)
@@ -121,6 +122,7 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 		Email:         db_user.Email,
 		Token:         token,
 		Refresh_Token: db_ref_token.Token,
+		IsChirpyRed:   db_user.IsChirpyRed.Bool,
 	}
 
 	respondWithJson(w, http.StatusOK, user)

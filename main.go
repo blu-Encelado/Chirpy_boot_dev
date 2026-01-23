@@ -15,6 +15,7 @@ import (
 )
 
 var secret_key string = ""
+var polka_key string = ""
 
 func main() {
 	const filepathRoot = "."
@@ -26,6 +27,7 @@ func main() {
 	godotenv.Load()
 	dbUrl := os.Getenv("DB_URL")
 	secret_key = os.Getenv("SECRET")
+	polka_key = os.Getenv("POLKA_KEY")
 	apiCfg.platform = os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbUrl)
 
@@ -50,6 +52,7 @@ func main() {
 	serv_mux.HandleFunc("PUT /api/users", apiCfg.handlerPUTUser)
 	serv_mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
 	serv_mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
+	serv_mux.HandleFunc("POST /api/polka/webhooks", apiCfg.handlerWebHooks)
 
 	server := &http.Server{
 		Addr:    ":" + port,
